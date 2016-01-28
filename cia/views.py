@@ -54,7 +54,7 @@ class EventListAPIView(APIView):
 
     def get(self, request, frmt=None):
         events = Event.objects.all()
-        serializer = CustomerSerializer(events, many=True)
+        serializer = EventSerializer(events, many=True, context={'request': request})
         return Response(serializer.data)
 
     def post(self, request, frmt=None):
@@ -76,12 +76,12 @@ class EventDetailAPIView(APIView):
 
     def get(self, request, pk, frmt=None):
         event = self.get_object(pk)
-        serializer = EventSerializer(event)
+        serializer = EventSerializer(event, context={'request': request})
         return Response(serializer.data)
 
     def put(self, request, pk, frmt=None):
         event = self.get_object(pk)
-        serializer = CustomerSerializer(event, data=request.data)
+        serializer = EventSerializer(event, data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -142,11 +142,11 @@ class TransactionListAPIView(APIView):
 
     def get(self, request, frmt=None):
         transactions = Transaction.objects.all()
-        serializer = TransactionSerializer(transactions, many=True)
+        serializer = TransactionSerializer(transactions, many=True, context={'request': request})
         return Response(serializer.data)
 
     def post(self, request, frmt=None):
-        serializer = TransactionSerializer(data=request.data)
+        serializer = TransactionSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -164,12 +164,12 @@ class TransactionDetailAPIView(APIView):
 
     def get(self, request, pk, frmt=None):
         transaction = self.get_object(pk)
-        serializer = TransactionSerializer(transaction)
+        serializer = TransactionSerializer(transaction, context={'request': request})
         return Response(serializer.data)
 
     def put(self, request, pk, frmt=None):
         transaction = self.get_object(pk)
-        serializer = TransactionSerializer(transaction, data=request.data)
+        serializer = TransactionSerializer(transaction, data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -190,7 +190,7 @@ class VisitListAPIView(APIView):
         return Response(serializer.data)
 
     def post(self, request, frmt=None):
-        serializer = VisitSerializer(data=request.data)
+        serializer = VisitSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -208,12 +208,12 @@ class VisitDetailAPIView(APIView):
 
     def get(self, request, pk, frmt=None):
         visit = self.get_object(pk)
-        serializer = VisitSerializer(visit)
+        serializer = VisitSerializer(visit, context={'request': request})
         return Response(serializer.data)
 
     def put(self, request, pk, frmt=None):
         visit = self.get_object(pk)
-        serializer = VisitSerializer(visit, data=request.data)
+        serializer = VisitSerializer(visit, data=request.data, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

@@ -14,6 +14,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 class EventSerializer(serializers.ModelSerializer):
     last_modified_date = serializers.DateTimeField(read_only=True)
+    organization = serializers.HyperlinkedRelatedField(read_only=True, view_name='organization-detail')
 
     class Meta:
         model = Event
@@ -31,6 +32,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
 class TransactionSerializer(serializers.ModelSerializer):
     last_modified_date = serializers.DateTimeField(read_only=True)
+    organization = serializers.HyperlinkedRelatedField(read_only=True, view_name='organization-detail')
 
     class Meta:
         model = Transaction
