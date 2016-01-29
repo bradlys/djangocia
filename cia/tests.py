@@ -97,6 +97,7 @@ class CustomerTests(APITestCase):
         response = self.client.put(customerDetail, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Customer.objects.get(name='Billy Bob').name, 'Billy Bob')
+        self.assertEqual(Customer.objects.count(), 1)
 
     def test_delete_customer(self):
         """
@@ -172,7 +173,7 @@ class EventTests(APITestCase):
         jsonData = response.json()
         self.assertEqual(jsonData['name'], 'Bobs Event')
 
-    def test_get_event_detail(self):
+    def test_get_event_list(self):
         """
         Get a newly created event list via API methods
         """
@@ -199,6 +200,7 @@ class EventTests(APITestCase):
         response = self.client.put(eventDetail, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Event.objects.get(name='Joes Event').name, 'Joes Event')
+        self.assertEqual(Event.objects.count(), 1)
 
     def test_delete_event(self):
         """
@@ -213,4 +215,94 @@ class EventTests(APITestCase):
         self.assertEqual(Event.objects.count(), 0)
 
 
+class OrganizationTests(APITestCase):
+
+    def test_create_organization(self):
+        """
+        Ensure we can create a new organization object.
+        """
+        organizationList = reverse('organization-list')
+        data = {'name':'Best organization', 'email':'best@org.org'}
+        response = self.client.post(organizationList, data, format='json')
+        data = response.json()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(data['name'], 'Best organization')
+        self.assertEqual(Organization.objects.count(), 1)
+        self.assertEqual(Organization.objects.get(name='Best organization').name, 'Best organization')
+
+    def test_create_organization_failure(self):
+        """
+        Ensure we can still fail at creating a new organization object.
+        """
+        organizationList = reverse('organization-list')
+        data = {}
+        response = self.client.post(organizationList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['name'] = ''
+        response = self.client.post(organizationList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['email'] = ''
+        response = self.client.post(organizationList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['email'] = 'ljasdfjklaxf'
+        response = self.client.post(organizationList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['name'] = 'best organization'
+        response = self.client.post(organizationList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Organization.objects.count(), 0)
+
+    def test_get_organization_detail(self):
+        """
+        Get a newly created organization detail via API methods
+        """
+        organizationList = reverse('organization-list')
+        organizationDetail = reverse('organization-detail', kwargs={'pk':1})
+        data = {'name':'Bobs organization', 'email':'banana@gmail.com'}
+        self.client.post(organizationList, data, format='json')
+        response = self.client.get(organizationDetail)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        jsonData = response.json()
+        self.assertEqual(jsonData['name'], 'Bobs organization')
+
+    def test_get_organization_list(self):
+        """
+        Get a newly created organization list via API methods
+        """
+        organizationList = reverse('organization-list')
+        data = {'name':'Bobs organization', 'email':'banana@gmail.com'}
+        self.client.post(organizationList, data, format='json')
+        response = self.client.get(organizationList)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        jsonData = response.json()
+        self.assertEqual(jsonData[0]['name'], 'Bobs organization')
+
+    def test_put_organization(self):
+        """
+        Put a newly created organization via API methods
+        """
+        organizationList = reverse('organization-list')
+        organizationDetail = reverse('organization-detail', kwargs={'pk':1})
+        data = {'name':'Bobs organization', 'email':'banana@gmail.com'}
+        self.client.post(organizationList, data, format='json')
+        response = self.client.get(organizationDetail)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Organization.objects.get(name='Bobs organization').name, 'Bobs organization')
+        data['name'] = 'Joes organization'
+        response = self.client.put(organizationDetail, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Organization.objects.get(name='Joes organization').name, 'Joes organization')
+        self.assertEqual(Organization.objects.count(), 1)
+
+    def test_delete_organization(self):
+        """
+        Delete a newly created organization via API methods
+        """
+        organizationList = reverse('organization-list')
+        data = {'name':'Bobs organization', 'email':'banana@gmail.com'}
+        self.client.post(organizationList, data, format='json')
+        organizationDetail = reverse('organization-detail', kwargs={'pk':1})
+        response = self.client.delete(organizationDetail, format='json')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Organization.objects.count(), 0)
 
