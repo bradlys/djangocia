@@ -33,12 +33,27 @@ class Event(BaseModel):
         on_delete=models.CASCADE
     )
 
+TRANSACTION_METHOD_CHOICES = (
+    ('CA', 'Cash'),
+    ('DE', 'Debit'),
+    ('CR', 'Credit'),
+    ('CH', 'Check'),
+    ('BI', 'Bitcoin'),
+    ('NO', 'None'),
+    ('IO', 'I Owe You'),
+    ('RA', 'Rain Check'),
+    ('OT', 'Other'),
+)
 
 class Transaction(BaseModel):
     amount = models.DecimalField(decimal_places=3, max_digits=10)
-    method = models.CharField(max_length=100)
+    method = models.CharField(max_length=2, choices=TRANSACTION_METHOD_CHOICES)
     organization = models.ForeignKey(
         Organization,
+        on_delete=models.CASCADE
+    )
+    customer = models.ForeignKey(
+        Customer,
         on_delete=models.CASCADE
     )
 

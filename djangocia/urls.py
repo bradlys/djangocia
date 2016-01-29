@@ -5,5 +5,6 @@ from rest_framework import routers, serializers, viewsets
 
 
 urlpatterns = [
-    url(r'^api/', include('cia.urls'))
+    url(r'^api/', include('cia.urls')),
+    url(r'^admin/', admin.site.urls),
 ]

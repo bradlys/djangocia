@@ -87,6 +87,7 @@ class CustomerTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Customer.objects.get(name='Billy Bob').name, 'Billy Bob')
 
+
 class EventTests(APITestCase):
     def test_create_event(self):
         """
