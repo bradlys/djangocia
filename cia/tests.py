@@ -70,7 +70,7 @@ class CustomerTests(APITestCase):
         jsonData = response.json()
         self.assertEqual(jsonData['name'], 'Jimmy Bob')
 
-    def test_get_customer_detail(self):
+    def test_get_customer_list(self):
         """
         Get a newly created customer list via API methods
         """
@@ -93,7 +93,17 @@ class CustomerTests(APITestCase):
         response = self.client.get(customerDetail)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Customer.objects.get(name='Jimmy Bob').name, 'Jimmy Bob')
+        # try updating the current item with bad info
+        data['name'] = None
+        response = self.client.put(customerDetail, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # end try
         data['name'] = 'Billy Bob'
+        # try updating an item that doesn't exist
+        wrongCustomerDetail = reverse('customer-detail', kwargs={'pk':9999})
+        response = self.client.put(wrongCustomerDetail, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        # end try
         response = self.client.put(customerDetail, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Customer.objects.get(name='Billy Bob').name, 'Billy Bob')
@@ -196,7 +206,17 @@ class EventTests(APITestCase):
         response = self.client.get(eventDetail)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Event.objects.get(name='Bobs Event').name, 'Bobs Event')
+        # try updating the current item with bad info
+        data['name'] = None
+        response = self.client.put(eventDetail, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # end try
         data['name'] = 'Joes Event'
+        # try updating an item that doesn't exist
+        wrongEventDetail = reverse('event-detail', kwargs={'pk':9999})
+        response = self.client.put(wrongEventDetail, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        # end try
         response = self.client.put(eventDetail, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Event.objects.get(name='Joes Event').name, 'Joes Event')
@@ -288,7 +308,17 @@ class OrganizationTests(APITestCase):
         response = self.client.get(organizationDetail)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Organization.objects.get(name='Bobs organization').name, 'Bobs organization')
+        # try updating the current item with bad info
+        data['name'] = None
+        response = self.client.put(organizationDetail, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # end try
         data['name'] = 'Joes organization'
+        # try updating an item that doesn't exist
+        wrongOrganizationDetail = reverse('organization-detail', kwargs={'pk':9999})
+        response = self.client.put(wrongOrganizationDetail, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        # end try
         response = self.client.put(organizationDetail, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Organization.objects.get(name='Joes organization').name, 'Joes organization')
@@ -394,7 +424,17 @@ class TransactionTests(APITestCase):
         response = self.client.get(transactionDetail)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Transaction.objects.get(pk=1).amount, Decimal('7.000'))
+        # try the bad data case
+        data['amount'] = 'banana'
+        response = self.client.put(transactionDetail, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # end try
         data['amount'] = 9
+        # try updating an item that doesn't exist
+        wrongTransactionDetail = reverse('transaction-detail', kwargs={'pk':9999})
+        response = self.client.put(wrongTransactionDetail, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        # end try
         response = self.client.put(transactionDetail, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Transaction.objects.get(pk=1).amount, Decimal('9.000'))
@@ -502,8 +542,17 @@ class VisitTests(APITestCase):
         response = self.client.get(visitDetail)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Visit.objects.get(pk=1).transaction.id, 1)
-        Transaction.objects.create(customer=self.customer, organization=self.organization, amount=500, method='CH')
         data['transaction'] = 2
+        # try the bad data case
+        response = self.client.put(visitDetail, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # end try
+        Transaction.objects.create(customer=self.customer, organization=self.organization, amount=500, method='CH')
+        # try the wrong item case
+        wrongVisitDetail = reverse('visit-detail', kwargs={'pk':2})
+        response = self.client.put(wrongVisitDetail, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        # end try
         response = self.client.put(visitDetail, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Visit.objects.get(pk=1).transaction.id, 2)
