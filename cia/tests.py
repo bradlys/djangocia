@@ -1,8 +1,8 @@
 from django.core.urlresolvers import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from cia.models import Customer, Event, Organization
-
+from cia.models import Customer, Event, Organization, Transaction
+from decimal import *
 
 class CustomerTests(APITestCase):
     def test_create_customer(self):
@@ -305,4 +305,110 @@ class OrganizationTests(APITestCase):
         response = self.client.delete(organizationDetail, format='json')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Organization.objects.count(), 0)
+
+class TransactionTests(APITestCase):
+
+    def setUp(self):
+        self.customer_id = Customer.objects.create(name='Banana-Man').id
+        self.organization_id = Organization.objects.create(name="Bobby's Organization").id
+
+    def test_create_transaction(self):
+        """
+        Ensure we can create a new transaction object.
+        """
+        transactionList = reverse('transaction-list')
+        data = {'amount':7, 'method':'CA', 'customer': self.customer_id, 'organization': self.organization_id}
+        response = self.client.post(transactionList, data, format='json')
+        data = response.json()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(data['amount'], '7.000')
+        self.assertEqual(Transaction.objects.count(), 1)
+        self.assertEqual(Transaction.objects.get(method='CA').customer.id, self.customer_id)
+
+    def test_create_transaction_failure(self):
+        """
+        Ensure we can still fail at creating a new transaction object.
+        """
+        transactionList = reverse('transaction-list')
+        data = {}
+        response = self.client.post(transactionList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['amount'] = ''
+        response = self.client.post(transactionList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['amount'] = 5
+        response = self.client.post(transactionList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['method'] = 'CA'
+        response = self.client.post(transactionList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['customer'] = self.customer_id
+        response = self.client.post(transactionList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['organization'] = self.organization_id
+        del data['amount']
+        response = self.client.post(transactionList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['amount'] = None
+        response = self.client.post(transactionList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['amount'] = 5
+        data['method'] = 'Cash'
+        response = self.client.post(transactionList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Transaction.objects.count(), 0)
+
+    def test_get_transaction_detail(self):
+        """
+        Get a newly created transaction detail via API methods
+        """
+        transactionList = reverse('transaction-list')
+        transactionDetail = reverse('transaction-detail', kwargs={'pk':1})
+        data = {'amount':7, 'method':'CA', 'customer': self.customer_id, 'organization': self.organization_id}
+        self.client.post(transactionList, data, format='json')
+        response = self.client.get(transactionDetail)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        jsonData = response.json()
+        self.assertEqual(jsonData['amount'], '7.000')
+
+    def test_get_transaction_list(self):
+        """
+        Get a newly created transaction list via API methods
+        """
+        transactionList = reverse('transaction-list')
+        data = {'amount':7, 'method':'CA', 'customer': self.customer_id, 'organization': self.organization_id}
+        self.client.post(transactionList, data, format='json')
+        response = self.client.get(transactionList)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        jsonData = response.json()
+        self.assertEqual(jsonData[0]['amount'], '7.000')
+
+    def test_put_transaction(self):
+        """
+        Put a newly created transaction via API methods
+        """
+        transactionList = reverse('transaction-list')
+        transactionDetail = reverse('transaction-detail', kwargs={'pk':1})
+        data = {'amount':7, 'method':'CA', 'customer': self.customer_id, 'organization': self.organization_id}
+        self.client.post(transactionList, data, format='json')
+        response = self.client.get(transactionDetail)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Transaction.objects.get(pk=1).amount, Decimal('7.000'))
+        data['amount'] = 9
+        response = self.client.put(transactionDetail, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Transaction.objects.get(pk=1).amount, Decimal('9.000'))
+        self.assertEqual(Transaction.objects.count(), 1)
+
+    def test_delete_transaction(self):
+        """
+        Delete a newly created transaction via API methods
+        """
+        transactionList = reverse('transaction-list')
+        data = {'amount':7, 'method':'CA', 'customer': self.customer_id, 'organization': self.organization_id}
+        self.client.post(transactionList, data, format='json')
+        transactionDetail = reverse('transaction-detail', kwargs={'pk':1})
+        response = self.client.delete(transactionDetail, format='json')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Transaction.objects.count(), 0)
 
