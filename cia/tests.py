@@ -1,7 +1,7 @@
 from django.core.urlresolvers import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from cia.models import Customer, Event, Organization, Transaction
+from cia.models import Customer, Event, Organization, Transaction, Visit
 from decimal import *
 
 class CustomerTests(APITestCase):
@@ -411,4 +411,114 @@ class TransactionTests(APITestCase):
         response = self.client.delete(transactionDetail, format='json')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Transaction.objects.count(), 0)
+
+
+class VisitTests(APITestCase):
+
+    def setUp(self):
+        self.customer = Customer.objects.create(name='Banana-Man')
+        self.organization = Organization.objects.create(name="Bobby's Organization")
+        self.event = Event.objects.create(name='Joes Event', date='2020-10-10', organization=self.organization)
+        self.transaction = Transaction.objects.create(customer=self.customer, organization=self.organization, amount=5, method='CA')
+        self.customer_id = self.customer.id
+        self.organization_id = self.organization.id
+        self.event_id = self.event.id
+        self.transaction_id = self.transaction.id
+
+    def test_create_visit(self):
+        """
+        Ensure we can create a new visit object.
+        """
+        visitList = reverse('visit-list')
+        data = {'customer':self.customer_id, 'event': self.event_id, 'transaction': self.transaction_id}
+        response = self.client.post(visitList, data, format='json')
+        data = response.json()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(data['transaction'], self.transaction_id)
+        self.assertEqual(Visit.objects.count(), 1)
+        self.assertEqual(Visit.objects.get(customer=self.customer_id).event.id, self.event_id)
+
+    def test_create_visit_failure(self):
+        """
+        Ensure we can still fail at creating a new visit object.
+        """
+        visitList = reverse('visit-list')
+        data = {}
+        response = self.client.post(visitList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['transaction'] = ''
+        response = self.client.post(visitList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['organization'] = ''
+        response = self.client.post(visitList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['customer'] = ''
+        response = self.client.post(visitList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['customer'] = self.customer_id
+        response = self.client.post(visitList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['organization'] = self.organization_id
+        response = self.client.post(visitList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        data['transaction'] = 3
+        response = self.client.post(visitList, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Visit.objects.count(), 0)
+
+    def test_get_visit_detail(self):
+        """
+        Get a newly created visit detail via API methods
+        """
+        visitList = reverse('visit-list')
+        visitDetail = reverse('visit-detail', kwargs={'pk':1})
+        data = {'customer':self.customer_id, 'event': self.event_id, 'transaction': self.transaction_id}
+        self.client.post(visitList, data, format='json')
+        response = self.client.get(visitDetail)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        jsonData = response.json()
+        self.assertEqual(jsonData['customer'], 1)
+
+    def test_get_visit_list(self):
+        """
+        Get a newly created visit list via API methods
+        """
+        visitList = reverse('visit-list')
+        data = {'customer':self.customer_id, 'event': self.event_id, 'transaction': self.transaction_id}
+        self.client.post(visitList, data, format='json')
+        response = self.client.get(visitList)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        jsonData = response.json()
+        self.assertEqual(jsonData[0]['customer'], 1)
+
+    def test_put_visit(self):
+        """
+        Put a newly created visit via API methods
+        """
+        visitList = reverse('visit-list')
+        visitDetail = reverse('visit-detail', kwargs={'pk':1})
+        data = {'customer':self.customer_id, 'event': self.event_id, 'transaction': self.transaction_id}
+        self.client.post(visitList, data, format='json')
+        response = self.client.get(visitDetail)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Visit.objects.get(pk=1).transaction.id, 1)
+        Transaction.objects.create(customer=self.customer, organization=self.organization, amount=500, method='CH')
+        data['transaction'] = 2
+        response = self.client.put(visitDetail, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Visit.objects.get(pk=1).transaction.id, 2)
+        self.assertEqual(Visit.objects.count(), 1)
+
+    def test_delete_visit(self):
+        """
+        Delete a newly created visit via API methods
+        """
+        visitList = reverse('visit-list')
+        data = {'customer':self.customer_id, 'event': self.event_id, 'transaction': self.transaction_id}
+        self.client.post(visitList, data, format='json')
+        visitDetail = reverse('visit-detail', kwargs={'pk':1})
+        response = self.client.delete(visitDetail, format='json')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Visit.objects.count(), 0)
+
 
