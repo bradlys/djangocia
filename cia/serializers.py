@@ -15,7 +15,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 
 class EventSerializer(serializers.ModelSerializer):
     last_modified_date = serializers.DateTimeField(read_only=True)
-    organization = serializers.HyperlinkedRelatedField(read_only=True, view_name='organization-detail')
+    organization = serializers.PrimaryKeyRelatedField(queryset=Organization.objects.all())
 
     class Meta:
         model = Event
@@ -33,8 +33,8 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
 class TransactionSerializer(serializers.ModelSerializer):
     last_modified_date = serializers.DateTimeField(read_only=True)
-    organization = serializers.HyperlinkedRelatedField(read_only=True, view_name='organization-detail')
-    customer = serializers.HyperlinkedRelatedField(read_only=True, view_name='customer-detail')
+    organization = serializers.PrimaryKeyRelatedField(queryset=Organization.objects.all())
+    customer = serializers.PrimaryKeyRelatedField(queryset=Customer.objects.all())
 
     class Meta:
         model = Transaction
@@ -43,9 +43,9 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 class VisitSerializer(serializers.ModelSerializer):
     last_modified_date = serializers.DateTimeField(read_only=True)
-    customer = serializers.HyperlinkedRelatedField(read_only=True, view_name='customer-detail')
-    transaction = serializers.HyperlinkedRelatedField(read_only=True, view_name='transaction-detail')
-    event = serializers.HyperlinkedRelatedField(read_only=True, view_name='event-detail')
+    customer = serializers.PrimaryKeyRelatedField(queryset=Customer.objects.all())
+    transaction = serializers.PrimaryKeyRelatedField(queryset=Transaction.objects.all())
+    event = serializers.PrimaryKeyRelatedField(queryset=Event.objects.all())
 
     class Meta:
         model = Visit
