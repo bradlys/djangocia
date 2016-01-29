@@ -25,8 +25,9 @@ class CustomerTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Customer.objects.count(), 3)
         self.assertEqual(Customer.objects.filter(name='Jimmy Bob').count(), 2)
-        # supplying read only shouldn't affect anything
+        # supplying read only parameters shouldn't affect anything (they should be ignored)
         data['visits'] = 342
+        # change the name, and this isn't read only
         data['name'] = 'Hard Names'
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -56,11 +57,9 @@ class CustomerTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(Customer.objects.count(), 0)
 
-
-
-    def test_get_customer(self):
+    def test_get_customer_detail(self):
         """
-        Get a newly created customer via API methods
+        Get a newly created customer detail via API methods
         """
         customerList = reverse('customer-list')
         customerDetail = reverse('customer-detail', kwargs={'pk':1})
@@ -68,8 +67,20 @@ class CustomerTests(APITestCase):
         self.client.post(customerList, data, format='json')
         response = self.client.get(customerDetail)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Add testing for content of response
+        jsonData = response.json()
+        self.assertEqual(jsonData['name'], 'Jimmy Bob')
 
+    def test_get_customer_detail(self):
+        """
+        Get a newly created customer list via API methods
+        """
+        customerList = reverse('customer-list')
+        data = {'name':'Jimmy Bob', 'birthday':'1990-08-28'}
+        self.client.post(customerList, data, format='json')
+        response = self.client.get(customerList)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        jsonData = response.json()
+        self.assertEqual(jsonData[0]['name'], 'Jimmy Bob')
 
     def test_put_customer(self):
         """
@@ -86,6 +97,18 @@ class CustomerTests(APITestCase):
         response = self.client.put(customerDetail, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Customer.objects.get(name='Billy Bob').name, 'Billy Bob')
+
+    def test_delete_customer(self):
+        """
+        Delete a newly created customer via API methods
+        """
+        customerList = reverse('customer-list')
+        data = {'name':'Jimmy Bob', 'birthday':'1990-08-28'}
+        self.client.post(customerList, data, format='json')
+        customerDetail = reverse('customer-detail', kwargs={'pk':1})
+        response = self.client.delete(customerDetail, format='json')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Customer.objects.count(), 0)
 
 
 class EventTests(APITestCase):
