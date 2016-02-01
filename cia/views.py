@@ -4,6 +4,32 @@ from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+import django_filters
+from django.conf import settings
+
+
+class PaginatedAPIView(APIView):
+    pagination_class = settings.REST_FRAMEWORK.get('DEFAULT_PAGINATION_CLASS', None)
+    @property
+    def paginator(self):
+        """
+        The paginator instance associated with the view, or `None`.
+        """
+        if not hasattr(self, '_paginator'):
+            if self.pagination_class is None:
+                self._paginator = None
+            else:
+                self._paginator = self.pagination_class
+        return self._paginator
+
+    def paginate_queryset(self, queryset):
+        if self.paginator is None:
+            return None
+        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+
+    def get_paginated_response(self, data):
+        assert self.paginator is not None
+        return self.paginator.get_paginated_response(data)
 
 
 class CustomerListAPIView(APIView):
@@ -48,6 +74,32 @@ class CustomerDetailAPIView(APIView):
         customer = self.get_object(pk)
         customer.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class VisitFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(name='customer__name')
+
+    class Meta:
+        model = Visit
+        fields = ['id', 'customer', 'event', 'transaction', 'name']
+
+
+class EventSearchForCustomerAPIView(PaginatedAPIView):
+
+    def get(self, request, pk, frmt=None):
+        customers = Customer.objects.all()
+        name = request.query_params.get('name', None)
+        if name is not None:
+            # searching for customers by name and returning visit info along with it
+            customers = customers.filter(name__contains=name)
+        customers = customers.order_by('-visits', 'name', 'id')
+        page = self.paginate_queryset(customers)
+        if page is not None:
+            serializer = CustomerSerializer(customers, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = CustomerSerializer(customers, many=True)
+        return Response(serializer.data)
+
 
 
 class EventListAPIView(APIView):
@@ -224,8 +276,6 @@ class VisitDetailAPIView(APIView):
         visit = self.get_object(pk)
         visit.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 
 
 
