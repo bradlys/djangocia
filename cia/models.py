@@ -47,15 +47,9 @@ TRANSACTION_METHOD_CHOICES = (
 
 class Transaction(BaseModel):
     amount = models.DecimalField(decimal_places=3, max_digits=10)
+    customer = models.ForeignKey(Customer,on_delete=models.CASCADE)
     method = models.CharField(max_length=2, choices=TRANSACTION_METHOD_CHOICES)
-    organization = models.ForeignKey(
-        Organization,
-        on_delete=models.CASCADE
-    )
-    customer = models.ForeignKey(
-        Customer,
-        on_delete=models.CASCADE
-    )
+    organization = models.ForeignKey(Organization,on_delete=models.CASCADE)
 
 
 class Visit(BaseModel):

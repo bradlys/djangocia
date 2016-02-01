@@ -30,14 +30,14 @@ class BuildEvent(APIView):
         for i in range(amount):
             name = names[random.randint(0, len(names)-1)]
             eventName = name + "'s event"
-            eventDate = str(datetime.datetime.fromtimestamp(random.randint(454293720, 2054293720)))
+            eventDate = datetime.datetime.fromtimestamp(random.randint(454293720, 2054293720)).strftime('%G-%m-%d')
             event = Event.objects.create(name=eventName, date=eventDate, organization=Organization.objects.get(pk=pk))
         return HttpResponse('')
 
 
 class BuildCustomer(APIView):
 
-    def get(self, request, amount, frmt=None):
+    def get(self, request, frmt=None):
         amount = request.query_params.get('amount', None)
         if amount is None or amount < 0:
             amount = 1000
@@ -49,14 +49,11 @@ class BuildCustomer(APIView):
 
 class BuildVisit(APIView):
 
-    def get(self, request, frmt=None):
+    def get(self, request, pk, frmt=None):
         amount = request.query_params.get('amount', None)
         if amount is None or amount < 0:
             amount = 2500
-        org_id = request.query_params.get('organization', None)
-        if org_id is None:
-            return HttpResponse('')
-        organization = Organization.objects.get(pk=org_id)
+        organization = Organization.objects.get(pk=pk)
         events = Event.objects.all()
         customers = Customer.objects.all()
         i = 0
@@ -66,7 +63,7 @@ class BuildVisit(APIView):
             event = random.choice(events)
             if Visit.objects.filter(customer=customer, event=event).count() == 0:
                 transaction = Transaction.objects.create(customer=customer, organization=organization, amount=5, method='CA')
-                visit = Visit.object.create(customer=customer, event=event, transaction=transaction)
+                Visit.objects.create(customer=customer, event=event, transaction=transaction)
                 i += 1
             j += 1
         return HttpResponse('')
