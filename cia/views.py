@@ -76,14 +76,6 @@ class CustomerDetailAPIView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class VisitFilter(django_filters.FilterSet):
-    name = django_filters.CharFilter(name='customer__name')
-
-    class Meta:
-        model = Visit
-        fields = ['id', 'customer', 'event', 'transaction', 'name']
-
-
 class EventSearchForCustomerAPIView(PaginatedAPIView):
 
     def get(self, request, pk, frmt=None):

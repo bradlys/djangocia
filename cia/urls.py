@@ -12,7 +12,7 @@ urlpatterns = [
     url(r'^customer/(?P<pk>[0-9]+)/$', CustomerDetailAPIView.as_view(), name='customer-detail'),
     url(r'^event/$', EventListAPIView.as_view(), name='event-list'),
     url(r'^event/(?P<pk>[0-9]+)/$', EventDetailAPIView.as_view(), name='event-detail'),
-    url(r'^event/(?P<pk>[0-9]+)/search/$', EventSearchForCustomerAPIView.as_view(), 'event-customer-search'),
+    url(r'^event/(?P<pk>[0-9]+)/search/$', EventSearchForCustomerAPIView.as_view(), name='event-customer-search'),
     url(r'^organization/$', OrganizationListAPIView.as_view(), name='organization-list'),
     url(r'^organization/(?P<pk>[0-9]+)/$', OrganizationDetailAPIView.as_view(), name='organization-detail'),
     url(r'^transaction/$', TransactionListAPIView.as_view(), name='transaction-list'),
