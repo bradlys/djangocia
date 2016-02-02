@@ -6,10 +6,12 @@ from rest_framework.response import Response
 from rest_framework import status
 import django_filters
 from django.conf import settings
+from rest_framework.settings import api_settings
+from rest_framework.pagination import _get_displayed_page_numbers
 
 
 class PaginatedAPIView(APIView):
-    pagination_class = settings.REST_FRAMEWORK.get('DEFAULT_PAGINATION_CLASS', None)
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
     @property
     def paginator(self):
         """
@@ -19,13 +21,13 @@ class PaginatedAPIView(APIView):
             if self.pagination_class is None:
                 self._paginator = None
             else:
-                self._paginator = self.pagination_class
+                self._paginator = self.pagination_class()
         return self._paginator
 
-    def paginate_queryset(self, queryset):
+    def paginate_queryset(self, queryset, request):
         if self.paginator is None:
             return None
-        return self.paginator.paginate_queryset(queryset, self.request, view=self)
+        return self.paginator.paginate_queryset(queryset=queryset, request=request, view=self)
 
     def get_paginated_response(self, data):
         assert self.paginator is not None
@@ -85,9 +87,9 @@ class EventSearchForCustomerAPIView(PaginatedAPIView):
             # searching for customers by name and returning visit info along with it
             customers = customers.filter(name__contains=name)
         customers = customers.order_by('-visits', 'name', 'id')
-        page = self.paginate_queryset(customers)
+        page = self.paginate_queryset(customers, self.request)
         if page is not None:
-            serializer = CustomerSerializer(customers, many=True)
+            serializer = CustomerSerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
         serializer = CustomerSerializer(customers, many=True)
         return Response(serializer.data)
