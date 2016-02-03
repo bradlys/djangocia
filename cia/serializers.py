@@ -52,6 +52,10 @@ class VisitSerializer(serializers.ModelSerializer):
         fields = ('id', 'customer', 'event', 'transaction', 'created_date', 'last_modified_date')
 
 
+class VisitEventSearchSerializer(VisitSerializer):
+    transaction = Transaction()
+
+
 class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -59,4 +63,15 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'first_name', 'last_name', 'email', 'is_staff', 'is_active', 'date_joined', 'groups',)
 
 
+class CustomerEventSearchSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(read_only=True)
+    email = serializers.EmailField(read_only=True)
+    birthday = serializers.DateTimeField(read_only=True)
+    visits = serializers.IntegerField(read_only=True)
+    last_modified_date = serializers.DateTimeField(read_only=True)
+    visited = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = Customer
+        fields = ('id', 'name', 'email', 'birthday', 'visits', 'created_date', 'last_modified_date', 'visited',)
 

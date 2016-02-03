@@ -1,5 +1,5 @@
-from cia.models import Customer, Event, Organization, Visit, Transaction
-from cia.serializers import CustomerSerializer, EventSerializer, OrganizationSerializer, TransactionSerializer, VisitSerializer
+from cia.models import *
+from cia.serializers import *
 from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -7,7 +7,6 @@ from rest_framework import status
 import django_filters
 from django.conf import settings
 from rest_framework.settings import api_settings
-from rest_framework.pagination import _get_displayed_page_numbers
 
 
 class PaginatedAPIView(APIView):
@@ -87,11 +86,21 @@ class EventSearchForCustomerAPIView(PaginatedAPIView):
             # searching for customers by name and returning visit info along with it
             customers = customers.filter(name__contains=name)
         customers = customers.order_by('-visits', 'name', 'id')
-        page = self.paginate_queryset(customers, self.request)
-        if page is not None:
-            serializer = CustomerSerializer(page, many=True)
+        paginatedCustomers = self.paginate_queryset(customers, self.request)
+        if paginatedCustomers is not None:
+            for i in paginatedCustomers:
+                if Visit.objects.filter(customer=i.id, event=pk).count() > 0:
+                    i.visited = True
+                else:
+                    i.visited = False
+            serializer = CustomerEventSearchSerializer(paginatedCustomers, many=True)
             return self.get_paginated_response(serializer.data)
-        serializer = CustomerSerializer(customers, many=True)
+        for i in customers:
+            if Visit.objects.filter(customer=i.id, event=pk).count() > 0:
+                i.visited = True
+            else:
+                i.visited = False
+        serializer = CustomerEventSearchSerializer(customers, many=True)
         return Response(serializer.data)
 
 
